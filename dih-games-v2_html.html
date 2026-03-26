@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dih Games V2</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --card: #181818;
+    --border: #2a2a2a;
+    --accent: #ffffff;
+    --muted: #666;
+    --hover: #222;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--accent);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    text-align: center;
+    padding: 40px 20px 20px;
+    border-bottom: 1px solid var(--border);
+    background: #0d0d0d;
+  }
+  .made-by {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .made-by span { color: #fff; }
+  header h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 900;
+    letter-spacing: -2px;
+    background: linear-gradient(135deg, #fff 0%, #888 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  header p {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 10px;
+  }
+
+  /* GAME GRID */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  .game-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .game-card:hover {
+    background: var(--hover);
+    border-color: #fff;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(255,255,255,0.05);
+  }
+  .game-card .icon { font-size: 2.8rem; margin-bottom: 12px; display: block; }
+  .game-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .game-card p { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .tag {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #fff;
+    color: #000;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 99px;
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #222;
+    position: sticky;
+    top: 0;
+    background: #111;
+    z-index: 1;
+  }
+  .modal-header h2 { font-size: 20px; font-weight: 800; }
+  .close-btn {
+    background: #222;
+    border: none;
+    color: #fff;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .close-btn:hover { background: #444; }
+  .modal-body { padding: 24px; }
+
+  /* BUTTONS */
+  .btn {
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 99px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:hover { background: #ddd; transform: scale(1.03); }
+  .btn-outline {
+    background: transparent;
+    color: #fff;
+    border: 1px solid #444;
+  }
+  .btn-outline:hover { background: #222; }
+  .btn-sm { padding: 7px 16px; font-size: 12px; }
+
+  /* GAME STYLES */
+  .game-msg {
+    background: #1a1a1a;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 12px 0;
+    text-align: center;
+    font-weight: 700;
+    font-size: 15px;
+    min-height: 48px;
+  }
+  .score-box {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 10px 0;
+  }
+  .score-item {
+    background: #1a1a1a;
+    border-radius: 10px;
+    padding: 10px 20px;
+    text-align: center;
+  }
+  .score-item .val { font-size: 22px; font-weight: 900; }
+  .score-item .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* RPS */
+  .rps-choices { display: flex; gap: 12px; justify-content: center; margin: 20px 0; }
+  .rps-btn {
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 16px;
+    padding: 16px 24px;
+    cursor: pointer;
+    font-size: 2.4rem;
+    transition: all 0.15s;
+    color: white;
+  }
+  .rps-btn:hover { border-color: #fff; background: #2a2a2a; transform: scale(1.1); }
+
+  /* SIMON */
+  .simon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 280px; margin: 20px auto; }
+  .simon-btn {
+    height: 120px;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.1s;
+    opacity: 0.5;
+    font-size: 1.5rem;
+  }
+  .simon-btn.active { opacity: 1; transform: scale(1.04); box-shadow: 0 0 20px currentColor; }
+  .simon-btn:nth-child(1) { background: #e74c3c; color: #e74c3c; }
+  .simon-btn:nth-child(2) { background: #3498db; color: #3498db; }
+  .simon-btn:nth-child(3) { background: #2ecc71; color: #2ecc71; }
+  .simon-btn:nth-child(4) { background: #f39c12; color: #f39c12; }
+
+  /* TIC TAC TOE */
+  .ttt-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    max-width: 240px;
+    margin: 20px auto;
+  }
+  .ttt-cell {
+    aspect-ratio: 1;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 10px;
+    font-size: 2rem;
+    font-weight: 900;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+  }
+  .ttt-cell:hover:empty { background: #222; }
+
+  /* MEMORY */
+  .mem-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    max-width: 300px;
+    margin: 16px auto;
+  }
+  .mem-card {
+    aspect-ratio: 1;
+    background: #222;
+    border: 1px solid #333;
+    border-radius: 10px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex; align-items: center; justify-content: center;
+    user-select: none;
+  }
+  .mem-card.flipped { background: #1a1a1a; border-color: #fff; }
+  .mem-card.matched { background: #1a2a1a; border-color: #2ecc71; opacity: 0.7; }
+
+  /* SNAKE */
+  #snakeCanvas {
+    display: block;
+    margin: 0 auto;
+    border: 1px solid #333;
+    border-radius: 10px;
+  }
+
+  /* WORDLE */
+  .wordle-grid { display: grid; grid-template-rows: repeat(6,1fr); gap: 5px; max-width: 220px; margin: 0 auto 16px; }
+  .wordle-row { display: grid; grid-template-columns: repeat(5,1fr); gap: 5px; }
+  .wordle-cell {
+    aspect-ratio: 1;
+    border: 2px solid #333;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+  }
+  .wordle-cell.correct { background: #2ecc71; border-color: #2ecc71; color: #000; }
+  .wordle-cell.present { background: #f39c12; border-color: #f39c12; color: #000; }
+  .wordle-cell.absent { background: #333; border-color: #333; }
+  .wordle-keyboard { display: flex; flex-direction: column; gap: 5px; align-items: center; }
+  .wordle-kb-row { display: flex; gap: 4px; }
+  .kb-key {
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px;
+    min-width: 28px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 11px;
+    transition: background 0.15s;
+  }
+  .kb-key:hover { background: #555; }
+  .kb-key.wide { min-width: 44px; font-size: 10px; }
+  .kb-key.correct { background: #2ecc71; color: #000; }
+  .kb-key.present { background: #f39c12; color: #000; }
+  .kb-key.absent { background: #1a1a1a; }
+
+  /* TYPING */
+  #typingText {
+    background: #1a1a1a;
+    border-radius: 10px;
+    padding: 16px;
+    font-size: 15px;
+    line-height: 1.7;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+  }
+  .t-correct { color: #2ecc71; }
+  .t-wrong { color: #e74c3c; background: rgba(231,76,60,0.2); border-radius: 3px; }
+  .t-current { border-bottom: 2px solid #fff; }
+  #typingInput {
+    width: 100%;
+    background: #111;
+    border: 1px solid #333;
+    color: #fff;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 15px;
+    outline: none;
+  }
+  #typingInput:focus { border-color: #fff; }
+
+  /* REACTION */
+  #reactionBox {
+    height: 180px;
+    border-radius: 16px;
+    border: 2px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.3rem;
+    font-weight: 800;
+    transition: background 0.1s;
+    user-select: none;
+  }
+
+  /* BLACKJACK */
+  .bj-hand { display: flex; gap: 8px; flex-wrap: wrap; min-height: 80px; margin: 8px 0; align-items: center; }
+  .card {
+    background: #fff;
+    color: #000;
+    border-radius: 8px;
+    width: 52px;
+    height: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 5px;
+    font-weight: 900;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    flex-shrink: 0;
+  }
+  .card.red { color: #e74c3c; }
+  .card-back {
+    background: linear-gradient(135deg, #222 25%, #333 25%, #333 50%, #222 50%, #222 75%, #333 75%);
+    background-size: 10px 10px;
+    border: 2px solid #555;
+  }
+
+  /* HIGHER LOWER */
+  .hl-card {
+    background: #fff;
+    color: #000;
+    border-radius: 16px;
+    width: 100px;
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 900;
+    margin: 0 auto;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+  .hl-card.red { color: #e74c3c; }
+  .hl-btns { display: flex; gap: 12px; justify-content: center; margin-top: 16px; }
+
+  /* HANGMAN */
+  #hangmanCanvas { display: block; margin: 0 auto; }
+  .hang-word { display: flex; gap: 8px; justify-content: center; margin: 12px 0; flex-wrap: wrap; }
+  .hang-letter {
+    width: 28px;
+    text-align: center;
+    border-bottom: 2px solid #fff;
+    font-size: 1.3rem;
+    font-weight: 900;
+    padding-bottom: 4px;
+  }
+  .hang-kb { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-top: 12px; }
+  .hang-key {
+    background: #222;
+    color: #fff;
+    border: 1px solid #333;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 13px;
+    transition: all 0.15s;
+  }
+  .hang-key:hover:not(:disabled) { background: #444; }
+  .hang-key:disabled { opacity: 0.3; cursor: not-allowed; }
+  .hang-key.wrong { background: #4a1a1a; border-color: #e74c3c; color: #e74c3c; }
+  .hang-key.correct { background: #1a3a1a; border-color: #2ecc71; color: #2ecc71; }
+
+  /* 2048 */
+  #g2048 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    max-width: 280px;
+    margin: 12px auto;
+    background: #1a1a1a;
+    padding: 10px;
+    border-radius: 12px;
+  }
+  .t2048 {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 1.1rem;
+    transition: all 0.1s;
+    background: #222;
+    color: #fff;
+  }
+
+  /* WHACK */
+  .whack-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; max-width: 280px; margin: 12px auto; }
+  .whack-hole {
+    aspect-ratio: 1;
+    background: #1a1a1a;
+    border-radius: 50%;
+    border: 2px solid #333;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 2rem;
+    transition: all 0.1s;
+    user-select: none;
+  }
+  .whack-hole.active { background: #2a2a0a; border-color: #f39c12; }
+
+  /* TRIVIA */
+  .trivia-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+  .trivia-opt {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    text-align: left;
+    transition: all 0.15s;
+  }
+  .trivia-opt:hover { background: #222; border-color: #fff; }
+  .trivia-opt.correct { background: #1a3a1a; border-color: #2ecc71; }
+  .trivia-opt.wrong { background: #3a1a1a; border-color: #e74c3c; }
+
+  /* AI CHAT */
+  .chat-history {
+    background: #0d0d0d;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 14px;
+    height: 240px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .chat-msg {
+    max-width: 80%;
+    padding: 9px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .chat-msg.user { background: #fff; color: #000; align-self: flex-end; border-radius: 12px 12px 2px 12px; }
+  .chat-msg.bot { background: #1a1a1a; color: #fff; align-self: flex-start; border-radius: 12px 12px 12px 2px; }
+  .chat-input-row { display: flex; gap: 8px; }
+  #chatInput {
+    flex: 1;
+    background: #111;
+    border: 1px solid #333;
+    color: #fff;
+    border-radius: 99px;
+    padding: 10px 16px;
+    font-size: 13px;
+    outline: none;
+  }
+  #chatInput:focus { border-color: #fff; }
+
+  /* NUMBER GUESS */
+  #guessInput {
+    width: 100%;
+    background: #111;
+    border: 1px solid #333;
+    color: #fff;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 20px;
+    text-align: center;
+    outline: none;
+    margin-bottom: 12px;
+  }
+  #guessInput:focus { border-color: #fff; }
+
+  /* COIN / DICE */
+  .big-emoji { font-size: 5rem; text-align: center; padding: 20px; display: block; }
+  .dice-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .die {
+    background: #fff;
+    color: #000;
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    font-weight: 900;
+  }
+
+  /* COLOR MATCH */
+  .cm-word {
+    font-size: 3rem;
+    font-weight: 900;
+    text-align: center;
+    padding: 20px;
+    border-radius: 14px;
+    background: #1a1a1a;
+    margin-bottom: 14px;
+  }
+  .cm-opts { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .cm-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 99px;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 13px;
+    transition: transform 0.1s;
+    color: #000;
+  }
+  .cm-btn:hover { transform: scale(1.07); }
+
+  /* MINESWEEPER */
+  .ms-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px; max-width: 300px; margin: 0 auto; }
+  .ms-cell {
+    aspect-ratio: 1;
+    background: #2a2a2a;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 900;
+    transition: background 0.1s;
+    user-select: none;
+  }
+  .ms-cell:hover:not(.revealed) { background: #3a3a3a; }
+  .ms-cell.revealed { background: #111; border: 1px solid #222; cursor: default; }
+  .ms-cell.flagged { background: #2a1a0a; }
+
+  footer {
+    text-align: center;
+    padding: 30px;
+    color: var(--muted);
+    font-size: 12px;
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="made-by">Made By: <span>bbq_sauce01</span> on Discord</div>
+  <h1>Dih Games V2</h1>
+  <p>20 Games • Free to Play • No Ads</p>
+</header>
+
+<div class="grid" id="gameGrid"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Game</h2>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<footer>Dih Games V2 · Made by bbq_sauce01 on Discord · 2024</footer>
+
+<script>
+const games = [
+  { id:'rps', icon:'✊', title:'Rock Paper Scissors', desc:'Classic hand game vs the computer.', tag:'Classic' },
+  { id:'simon', icon:'🔴', title:'Simon Says', desc:'Repeat the color sequence. How far can you go?', tag:'Memory' },
+  { id:'ttt', icon:'⬜', title:'Tic Tac Toe', desc:'Outsmart the AI in this classic grid game.', tag:'AI' },
+  { id:'memory', icon:'🃏', title:'Memory Match', desc:'Flip cards and find all matching pairs.', tag:'Memory' },
+  { id:'wordle', icon:'🟩', title:'Word Guess', desc:'Guess the 5-letter word in 6 tries.', tag:'Word' },
+  { id:'snake', icon:'🐍', title:'Snake', desc:'Eat food, grow longer, don\'t hit the wall!', tag:'Arcade' },
+  { id:'blackjack', icon:'🂡', title:'Blackjack', desc:'Beat the dealer to 21. Classic card game.', tag:'Cards' },
+  { id:'highlow', icon:'🃏', title:'Higher or Lower', desc:'Guess if the next card is higher or lower.', tag:'Cards' },
+  { id:'hangman', icon:'🔤', title:'Hangman', desc:'Guess the hidden word before you run out.', tag:'Word' },
+  { id:'2048', icon:'🔢', title:'2048', desc:'Slide tiles and reach the 2048 tile!', tag:'Puzzle' },
+  { id:'whack', icon:'🦔', title:'Whack-a-Mole', desc:'Whack the moles as fast as you can!', tag:'Arcade' },
+  { id:'trivia', icon:'❓', title:'Trivia Quiz', desc:'Test your knowledge with random questions.', tag:'Quiz' },
+  { id:'typing', icon:'⌨️', title:'Typing Speed', desc:'How fast can you type? Test your WPM.', tag:'Skill' },
+  { id:'reaction', icon:'⚡', title:'Reaction Time', desc:'Click when the screen turns green. How fast are you?', tag:'Skill' },
+  { id:'aichat', icon:'🤖', title:'AI Chat', desc:'Chat with a witty AI game bot.', tag:'AI' },
+  { id:'number', icon:'🔢', title:'Number Guess', desc:'Guess a number between 1-100 in 7 tries.', tag:'Classic' },
+  { id:'coin', icon:'🪙', title:'Coin Flip', desc:'Heads or tails? Make your bet!', tag:'Luck' },
+  { id:'dice', icon:'🎲', title:'Dice Roller', desc:'Roll up to 6 dice at once. Beat the odds.', tag:'Luck' },
+  { id:'colormatch', icon:'🎨', title:'Color Match', desc:'Match the ink color, not the word text!', tag:'Brain' },
+  { id:'minesweeper', icon:'💣', title:'Minesweeper', desc:'Clear the board without hitting a mine.', tag:'Puzzle' },
+];
+
+// Render game cards
+const grid = document.getElementById('gameGrid');
+games.forEach(g => {
+  const card = document.createElement('div');
+  card.className = 'game-card';
+  card.innerHTML = `<span class="icon">${g.icon}</span><h3>${g.title}</h3><p>${g.desc}</p><span class="tag">${g.tag}</span>`;
+  card.onclick = () => openGame(g.id, g.title);
+  grid.appendChild(card);
+});
+
+function openModal(title, html) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('active');
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+  document.getElementById('modalBody').innerHTML = '';
+  stopSnake(); stopWhack();
+}
+document.getElementById('modalOverlay').onclick = e => { if(e.target.id === 'modalOverlay') closeModal(); };
+
+// ===== GAMES =====
+
+function openGame(id, title) {
+  const fn = {
+    rps: gameRPS, simon: gameSimon, ttt: gameTTT, memory: gameMemory,
+    wordle: gameWordle, snake: gameSnake, blackjack: gameBlackjack,
+    highlow: gameHighLow, hangman: gameHangman, '2048': game2048,
+    whack: gameWhack, trivia: gameTrivia, typing: gameTyping,
+    reaction: gameReaction, aichat: gameAIChat, number: gameNumber,
+    coin: gameCoin, dice: gameDice, colormatch: gameColorMatch,
+    minesweeper: gameMinesweeper
+  }[id];
+  if(fn) fn(title);
+}
+
+// ===== ROCK PAPER SCISSORS =====
+function gameRPS(title) {
+  openModal(title, `
+    <div class="score-box">
+      <div class="score-item"><div class="val" id="rpsW">0</div><div class="lbl">Wins</div></div>
+      <div class="score-item"><div class="val" id="rpsT">0</div><div class="lbl">Ties</div></div>
+      <div class="score-item"><div class="val" id="rpsL">0</div><div class="lbl">Losses</div></div>
+    </div>
+    <div class="game-msg" id="rpsMsg">Choose your weapon!</div>
+    <div class="rps-choices">
+      <button class="rps-btn" onclick="rpsPlay('rock')">✊</button>
+      <button class="rps-btn" onclick="rpsPlay('scissors')">✌️</button>
+      <button class="rps-btn" onclick="rpsPlay('paper')">🖐️</button>
+    </div>
+    <p style="text-align:center;color:#666;font-size:12px">Rock · Scissors · Paper</p>
+  `);
+  window.rpsW=0; window.rpsT=0; window.rpsL=0;
+}
+window.rpsPlay = function(p) {
+  const choices=['rock','scissors','paper'];
+  const emojis={rock:'✊',scissors:'✌️',paper:'🖐️'};
+  const c=choices[Math.floor(Math.random()*3)];
+  const wins={rock:'scissors',scissors:'paper',paper:'rock'};
+  let msg='';
+  if(p===c){window.rpsT++;msg=`Tie! We both picked ${emojis[p]}`;}
+  else if(wins[p]===c){window.rpsW++;msg=`You Win! ${emojis[p]} beats ${emojis[c]} 🎉`;}
+  else{window.rpsL++;msg=`You Lose! ${emojis[c]} beats ${emojis[p]} 😢`;}
+  document.getElementById('rpsMsg').textContent=msg;
+  document.getElementById('rpsW').textContent=window.rpsW;
+  document.getElementById('rpsT').textContent=window.rpsT;
+  document.getElementById('rpsL').textContent=window.rpsL;
+};
+
+// ===== SIMON SAYS =====
+function gameSimon(title) {
+  openModal(title, `
+    <div class="score-box">
+      <div class="score-item"><div class="val" id="simonScore">0</div><div class="lbl">Level</div></div>
+      <div class="score-item"><div class="val" id="simonBest">0</div><div class="lbl">Best</div></div>
+    </div>
+    <div class="game-msg" id="simonMsg">Press Start to play!</div>
+    <div class="simon-grid">
+      <button class="simon-btn" id="sb0" onclick="simonClick(0)"></button>
+      <button class="simon-btn" id="sb1" onclick="simonClick(1)"></button>
+      <button class="simon-btn" id="sb2" onclick="simonClick(2)"></button>
+      <button class="simon-btn" id="sb3" onclick="simonClick(3)"></button>
+    </div>
+    <div style="text-align:center;margin-top:12px"><button class="btn" onclick="simonStart()">Start</button></div>
+  `);
+  window.simonSeq=[]; window.simonPlayer=[]; window.simonBest=0; window.simonPlaying=false;
+}
+window.simonStart = function() {
+  window.simonSeq=[]; window.simonPlayer=[]; window.simonPlaying=false;
+  simonNext();
+};
+function simonNext() {
+  window.simonSeq.push(Math.floor(Math.random()*4));
+  window.simonPlayer=[];
+  window.simonPlaying=false;
+  document.getElementById('simonMsg').textContent='Watch...';
+  document.getElementById('simonScore').textContent=window.simonSeq.length-1;
+  simonShow(0);
+}
+function simonShow(i) {
+  if(i>=window.simonSeq.length){ window.simonPlaying=true; document.getElementById('simonMsg').textContent='Your turn!'; return; }
+  const btn=document.getElementById('sb'+window.simonSeq[i]);
+  setTimeout(()=>{
+    btn.classList.add('active');
+    setTimeout(()=>{ btn.classList.remove('active'); simonShow(i+1); },500);
+  },200+i*700);
+}
+window.simonClick = function(n) {
+  if(!window.simonPlaying) return;
+  const btn=document.getElementById('sb'+n);
+  btn.classList.add('active'); setTimeout(()=>btn.classList.remove('active'),200);
+  window.simonPlayer.push(n);
+  const i=window.simonPlayer.length-1;
+  if(window.simonPlayer[i]!==window.simonSeq[i]){
+    const sc=window.simonSeq.length-1;
+    if(sc>window.simonBest) window.simonBest=sc;
+    document.getElementById('simonBest').textContent=window.simonBest;
+    document.getElementById('simonMsg').textContent=`Game Over! Score: ${sc}`;
+    window.simonPlaying=false;
+    return;
+  }
+  if(window.simonPlayer.length===window.simonSeq.length) simonNext();
+};
+
+// ===== TIC TAC TOE =====
+function gameTTT(title) {
+  openModal(title, `
+    <div class="score-box">
+      <div class="score-item"><div class="val" id="tttYou">0</div><div class="lbl">You (X)</div></div>
+      <div class="score-item"><div class="val" id="tttAI">0</div><div class="lbl">AI (O)</div></div>
+    </div>
+    <div class="game-msg" id="tttMsg">Your turn!</div>
+    <div class="ttt-grid" id="tttGrid">${Array(9).fill(0).map((_,i)=>`<div class="ttt-cell" id="tc${i}" onclick="tttMove(${i})"></div>`).join('')}</div>
+    <div style="text-align:center;margin-top:12px"><button class="btn" onclick="tttReset()">New Game</button></div>
+  `);
+  window.tttBoard=Array(9).fill(''); window.tttYou=0; window.tttAI=0; window.tttActive=true;
+}
+const tttWins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function tttCheck(b,p){return tttWins.some(l=>l.every(i=>b[i]===p));}
+window.tttMove=function(i){
+  if(!window.tttActive||window.tttBoard[i]) return;
+  window.tttBoard[i]='X'; document.getElementById('tc'+i).textContent='X';
+  if(tttCheck(window.tttBoard,'X')){ window.tttYou++; document.getElementById('tttYou').textContent=window.tttYou; document.getElementById('tttMsg').textContent='You Win! 🎉'; window.tttActive=false; return; }
+  if(window.tttBoard.every(c=>c)){ document.getElementById('tttMsg').textContent="It's a draw!"; window.tttActive=false; return; }
+  window.tttActive=false;
+  setTimeout(()=>{
+    // AI: minimax
+    let best=-Infinity,move=-1;
+    window.tttBoard.forEach((_,j)=>{ if(!window.tttBoard[j]){ window.tttBoard[j]='O'; let s=tttMini(window.tttBoard,false); window.tttBoard[j]=''; if(s>best){best=s;move=j;} } });
+    window.tttBoard[move]='O'; document.getElementById('tc'+move).textContent='O';
+    if(tttCheck(window.tttBoard,'O')){ window.tttAI++; document.getElementById('tttAI').textContent=window.tttAI; document.getElementById('tttMsg').textContent='AI Wins! 🤖'; return; }
+    if(window.tttBoard.every(c=>c)){ document.getElementById('tttMsg').textContent="It's a draw!"; return; }
+    window.tttActive=true; document.getElementById('tttMsg').textContent='Your turn!';
+  },400);
+};
+function tttMini(b,isMax){
+  if(tttCheck(b,'O')) return 10;
+  if(tttCheck(b,'X')) return -10;
+  if(b.every(c=>c)) return 0;
+  let best=isMax?-Infinity:Infinity;
+  b.forEach((_,i)=>{ if(!b[i]){ b[i]=isMax?'O':'X'; let s=tttMini(b,!isMax); b[i]=''; best=isMax?Math.max(best,s):Math.min(best,s); } });
+  return best;
+}
+window.tttReset=function(){
+  window.tttBoard=Array(9).fill(''); window.tttActive=true;
+  for(let i=0;i<9;i++) document.getElementById('tc'+i).textContent='';
+  document.getElementById('tttMsg').textContent='Your turn!';
+};
+
+// ===== MEMORY MATCH =====
+const memEmojis=['🍕','🎸','🚀','🦊','🍦','🎯','🌈','🏆'];
+function gameMemory(title) {
+  openModal(title, `
+    <div class="score-box">
+      <div class="score-item"><div class="val" id="memMoves">0</div><div class="lbl">Moves</div></div>
+      <div class="score-item"><div class="val" id="memPairs">0</div><div class="lbl">Pairs</div></div>
+    </div>
+    <div class="mem-grid" id="memGrid"></div>
+    <div style="text-align:center;margin-top:8px"><button class="btn" onclick="memStart()">Shuffle & Restart</button></div>
+  `);
+  memStart();
+}
+window.memStart=function(){
+  const pairs=[...memEmojis,...memEmojis].sort(()=>Math.random()-0.5);
+  window.memFlipped=[]; window.memMoves=0; window.memPairs=0; window.memLock=false;
+  document.getElementById('memMoves').textContent=0;
+  document.getElementById('memPairs').textContent=0;
+  const grid=document.getElementById('memGrid');
+  grid.innerHTML=pairs.map((e,i)=>`<div class="mem-card" id="mc${i}" data-emoji="${e}" onclick="memFlip(${i})"></div>`).join('');
+};
+window.memFlip=function(i){
+  if(window.memLock) return;
+  const card=document.getElementById('mc'+i);
+  if(card.classList.contains('flipped')||card.classList.contains('matched')) return;
+  card.textContent=card.dataset.emoji; card.classList.add('flipped');
+  window.memFlipped.push(i);
+  if(window.memFlipped.length===2){
+    window.memLock=true; window.memMoves++;
+    document.getElementById('memMoves').textContent=window.memMoves;
+    const [a,b]=window.memFlipped;
+    const ca=document.getElementById('mc'+a), cb=document.getElementById('mc'+b);
+    if(ca.dataset.emoji===cb.dataset.emoji){
+      ca.classList.add('matched'); cb.classList.add('matched');
+      window.memPairs++; document.getElementById('memPairs').textContent=window.memPairs;
+      window.memFlipped=[]; window.memLock=false;
+      if(window.memPairs===8) setTimeout(()=>alert('🎉 You matched all pairs!'),100);
+    } else {
+      setTimeout(()=>{ ca.textContent=''; cb.textContent=''; ca.classList.remove('flipped'); cb.classList.remove('flipped'); window.memFlipped=[]; window.memLock=false; },800);
+    }
+  }
+};
+
+// ===== WORDLE =====
+const wordleWords=['crane','slate','adieu','arise','stare','bears','storm','plant','flame','brisk','champ','draft','flock','grind','heist','joust','knack','lyric','mourn','nifty'];
+function gameWordle(title) {
+  window.wWord=wordleWords[Math.floor(Math.random()*wordleWords.length)];
+  window.wRow=0; window.wCol=0; window.wGrid=Array(6).fill(null).map(()=>Array(5).fill(''));
+  window.wDone=false;
+  openModal(title, `
+    <div class="wordle-grid" id="wGrid">${Array(6).fill(0).map(()=>`<div class="wordle-row">${Array(5).fill(0).map(()=>'<div class="wordle-cell"></div>').join('')}</div>`).join('')}</div>
+    <div class="game-msg" id="wMsg">Guess the 5-letter word!</div>
+    <div class="wordle-keyboard" id="wKb">
+      ${[['q','w','e','r','t','y','u','i','o','p'],['a','s','d','f','g','h','j','k','l'],['Enter','z','x','c','v','b','n','m','⌫']].map(r=>`<div class="wordle-kb-row">${r.map(k=>`<button class="kb-key${k.length>1?' wide':''}" id="wk-${k}" onclick="wType('${k}')">${k}</button>`).join('')}</div>`).join('')}
+    </div>
+  `);
+}
+window.wType=function(k){
+  if(window.wDone) return;
+  if(k==='⌫'){if(window.wCol>0){window.wCol--;window.wGrid[window.wRow][window.wCol]='';wRender();}}
+  else if(k==='Enter'){wSubmit();}
+  else if(/^[a-z]$/.test(k)&&window.wCol<5){window.wGrid[window.wRow][window.wCol]=k;window.wCol++;wRender();}
+};
+document.addEventListener('keydown',e=>{if(document.getElementById('wGrid')){const k=e.key;if(k==='Backspace')window.wType('⌫');else if(k==='Enter')window.wType('Enter');else if(/^[a-zA-Z]$/.test(k))window.wType(k.toLowerCase());}});
+function wRender(){
+  const rows=document.querySelectorAll('#wGrid .wordle-row');
+  rows.forEach((row,ri)=>row.querySelectorAll('.wordle-cell').forEach((cell,ci)=>{cell.textContent=(window.wGrid[ri][ci]||'').toUpperCase();}));
+}
+function wSubmit(){
+  if(window.wCol<5){document.getElementById('wMsg').textContent='Not enough letters!';return;}
+  const guess=window.wGrid[window.wRow].join('');
+  const target=window.wWord;
+  const result=Array(5).fill('absent');
+  const used=Array(5).fill(false);
+  for(let i=0;i<5;i++) if(guess[i]===target[i]){result[i]='correct';used[i]=true;}
+  for(let i=0;i<5;i++) if(result[i]!=='correct'){for(let j=0;j<5;j++){if(!used[j]&&guess[i]===target[j]){result[i]='present';used[j]=true;break;}}}
+  const rows=document.querySelectorAll('#wGrid .wordle-row');
+  rows[window.wRow].querySelectorAll('.wordle-cell').forEach((c,i)=>{c.classList.add(result[i]);});
+  result.forEach((r,i)=>{const el=document.getElementById('wk-'+guess[i]);if(el&&!el.classList.contains('correct')){el.className='kb-key'+(guess[i].length>1?' wide':'')+' '+r;}});
+  if(result.every(r=>r==='correct')){document.getElementById('wMsg').textContent='🎉 Brilliant!';window.wDone=true;return;}
+  window.wRow++; window.wCol=0;
+  if(window.wRow===6){document.getElementById('wMsg').textContent=`Game Over! Word was: ${target.toUpperCase()}`;window.wDone=true;}
+  else document.getElementById('wMsg').textContent='Keep guessing!';
+}
+
+// ===== SNAKE =====
+let snakeInterval=null;
+function gameSnake(title){
+  openModal(title,`
+    <div class="score-box"><div class="score-item"><div class="val" id="snakeScore">0</div><div class="lbl">Score</div></div><div class="score-item"><div class="val" id="snakeBest">0</div><div class="lbl">Best</div></div></div>
+    <div style="text-align:center;margin-bottom:8px;font-size:12px;color:#666">Arrow keys or WASD to move</div>
+    <canvas id="snakeCanvas" width="280" height="280"></canvas>
+    <div style="text-align:center;margin-top:12px"><button class="btn" onclick="snakeStart()">Start / Restart</button></div>
+  `);
+  window.snakeBestScore=window.snakeBestScore||0;
+  document.getElementById('snakeBest').textContent=window.snakeBestScore;
+}
+window.snakeStart=function(){
+  stopSnake();
+  const cvs=document.getElementById('snakeCanvas'); if(!cvs) return;
+  const ctx=cvs.getContext('2d');
+  const sz=14, cols=20, rows=20;
+  let snake=[{x:10,y:10}], dir={x:1,y:0}, nextDir={x:1,y:0}, food=randFood(), score=0, alive=true;
+  function randFood(){let f; do{f={x:Math.floor(Math.random()*cols),y:Math.floor(Math.random()*rows)};}while(snake.some(s=>s.x===f.x&&s.y===f.y)); return f;}
+  function draw(){
+    ctx.fillStyle='#0a0a0a'; ctx.fillRect(0,0,280,280);
+    snake.forEach((s,i)=>{ctx.fillStyle=i===0?'#fff':'#888'; ctx.beginPath(); ctx.roundRect(s.x*sz+1,s.y*sz+1,sz-2,sz-2,3); ctx.fill();});
+    ctx.fillStyle='#e74c3c'; ctx.beginPath(); ctx.arc(food.x*sz+sz/2,food.y*sz+sz/2,sz/2-1,0,Math.PI*2); ctx.fill();
+  }
+  function step(){
+    if(!alive) return;
+    dir=nextDir;
+    const head={x:(snake[0].x+dir.x+cols)%cols,y:(snake[0].y+dir.y+rows)%rows};
+    if(snake.some(s=>s.x===head.x&&s.y===head.y)){
+      alive=false; ctx.fillStyle='rgba(231,76,60,0.3)'; ctx.fillRect(0,0,280,280);
+      ctx.fillStyle='#fff'; ctx.font='bold 20px sans-serif'; ctx.textAlign='center'; ctx.fillText('GAME OVER',140,140);
+      if(score>window.snakeBestScore){window.snakeBestScore=score; document.getElementById('snakeBest').textContent=score;}
+      return;
+    }
+    snake.unshift(head);
+    if(head.x===food.x&&head.y===food.y){score++;document.getElementById('snakeScore').textContent=score;food=randFood();}
+    else snake.pop();
+    draw();
+  }
+  document.onkeydown=e=>{
+    const m={ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0},w:{x:0,y:-1},s:{x:0,y:1},a:{x:-1,y:0},d:{x:1,y:0}};
+    if(m[e.key]&&!(m[e.key].x===-dir.x&&m[e.key].y===-dir.y)){nextDir=m[e.key]; e.preventDefault();}
+  };
+  draw();
+  snakeInterval=setInterval(step,130);
+};
+function stopSnake(){if(snakeInterval){clearInterval(snakeInterval);snakeInterval=null;}}
+
+// ===== BLACKJACK =====
+function gameBJ(){return{rank:['2','3','4','5','6','7','8','9','10','J','Q','K','A'][Math.floor(Math.random()*13)],suit:['♠','♥','♦','♣'][Math.floor(Math.random()*4)]};}
+function bjVal(cards){let v=0,aces=0;cards.forEach(c=>{if(['J','Q','K'].includes(c.rank))v+=10;else if(c.rank==='A'){v+=11;aces++;}else v+=parseInt(c.rank);});while(v>21&&aces){v-=10;aces--;}return v;}
+function bjCard(c,hidden){if(hidden)return`<div class="card card-back"></div>`;const red=c.suit==='♥'||c.suit==='♦';return`<div class="card${red?' red':''}">${c.rank}<br>${c.suit}</div>`;}
+function gameBlackjack(title){
+  openModal(title,`
+    <div class="score-box"><div class="score-item"><div class="val" id="bjChips">100</div><div class="lbl">Chips</div></div><div class="score-item"><div class="val" id="bjBet">10</div><div class="lbl">Bet</div></div></div>
+    <div style="margin:10px 0"><b style="font-size:12px;color:#666">DEALER</b><div class="bj-hand" id="bjDealer"></div></div>
+    <div style="margin:10px 0"><b style="font-size:12px;color:#666">YOU</b><div class="bj-hand" id="bjPlayer"></div></div>
+    <div class="game-msg" id="bjMsg">Press Deal to start!</div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">
+      <button class="btn btn-sm" onclick="bjDeal()">Deal</button>
+      <button class="btn btn-sm btn-outline" id="bjHit" onclick="bjHit()" disabled>Hit</button>
+      <button class="btn btn-sm btn-outline" id="bjStand" onclick="bjStand()" disabled>Stand</button>
+    </div>
+    <div style="text-align:center;margin-top:10px;font-size:12px;color:#666">
+      Bet: <button class="btn btn-sm btn-outline" style="padding:3px 10px;font-size:11px" onclick="bjChangeBet(-5)">-5</button>
+      &nbsp;<button class="btn btn-sm btn-outline" style="padding:3px 10px;font-size:11px" onclick="bjChangeBet(5)">+5</button>
+    </div>
+  `);
+  window.bjChips=100; window.bjBet=10; window.bjDeck=[];
+}
+window.bjChangeBet=function(n){window.bjBet=Math.max(5,Math.min(window.bjChips,window.bjBet+n));document.getElementById('bjBet').textContent=window.bjBet;};
+window.bjDeal=function(){
+  if(window.bjChips<window.bjBet){document.getElementById('bjMsg').textContent='Not enough chips!';return;}
+  window.bjPlayer=[gameBJ(),gameBJ()]; window.bjDealer=[gameBJ(),gameBJ()]; window.bjHidden=true;
+  bjRender(); document.getElementById('bjMsg').textContent='Hit or Stand?';
+  document.getElementById('bjHit').disabled=false; document.getElementById('bjStand').disabled=false;
+  if(bjVal(window.bjPlayer)===21){bjEnd('Blackjack! You Win! 🎉',1.5);}
+};
+window.bjHit=function(){window.bjPlayer.push(gameBJ());bjRender();if(bjVal(window.bjPlayer)>21)bjEnd('Bust! You Lose 😢',-1);};
+window.bjStand=function(){
+  window.bjHidden=false; bjRender();
+  while(bjVal(window.bjDealer)<17) window.bjDealer.push(gameBJ());
+  bjRender();
+  const pv=bjVal(window.bjPlayer),dv=bjVal(window.bjDealer);
+  if(dv>21||pv>dv)bjEnd('You Win! 🎉',1);
+  else if(pv===dv)bjEnd("Push! It's a tie.",0);
+  else bjEnd('Dealer Wins 😢',-1);
+};
+function bjEnd(msg,mult){
+  window.bjChips+=Math.round(window.bjBet*mult); if(window.bjChips<=0){window.bjChips=100;msg+=' (Reset to 100)';}
+  document.getElementById('bjChips').textContent=window.bjChips;
+  document.getElementById('bjMsg').textContent=msg;
+  document.getElementById('bjHit').disabled=true; document.getElementById('bjStand').disabled=true;
+  window.bjHidden=false; bjRender();
+}
+function bjRender(){
+  document.getElementById('bjDealer').innerHTML=window.bjDealer.map((c,i)=>bjCard(c,window.bjHidden&&i===1)).join('');
+  document.getElementById('bjPlayer').innerHTML=window.bjPlayer.map(c=>bjCard(c,false)).join('');
+}
+
+// ===== HIGHER OR LOWER =====
+const suits=['♠','♥','♦','♣'];
+const ranks=['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+function hlCard(){return{rank:ranks[Math.floor(Math.random()*13)],suit:suits[Math.floor(Math.random()*4)]};}
+function hlVal(c){return ranks.indexOf(c.rank);}
+function gameHighLow(title){
+  window.hlScore=0; window.hlCurrent=hlCard();
+  openModal(title,`
+    <div class="score-box"><div class="score-item"><div class="val" id="hlScore">0</div><div class="lbl">Score</div></div><div class="score-item"><div class="val" id="hlBest">0</div><div class="lbl">Best</div></div></div>
+    <div id="hlCardEl"></div>
+    <div class="game-msg" id="hlMsg">Will the next card be Higher or Lower?</div>
+    <div class="hl-btns">
+      <button class="btn" onclick="hlGuess('higher')">⬆ Higher</button>
+      <button class="btn btn-outline" onclick="hlGuess('lower')">⬇ Lower</button>
+    </div>
+  `);
+  window.hlBest=window.hlBest||0;
+  document.getElementById('hlBest').textContent=window.hlBest;
+  hlRender();
+}
+function hlRender(){const c=window.hlCurrent;const red=c.suit==='♥'||c.suit==='♦';document.getElementById('hlCardEl').innerHTML=`<div class="hl-card${red?' red':''}">${c.rank}<br>${c.suit}</div>`;}
+window.hlGuess=function(g){
+  const next=hlCard();
+  const cv=hlVal(window.hlCurrent), nv=hlVal(next);
+  let correct=(g==='higher'&&nv>cv)||(g==='lower'&&nv<cv);
+  if(nv===cv)correct=true; // tie = free
+  window.hlCurrent=next; hlRender();
+  if(correct){window.hlScore++;document.getElementById('hlScore').textContent=window.hlScore;document.getElementById('hlMsg').textContent=`Correct! Next: ${next.rank}${next.suit}`;}
+  else{if(window.hlScore>window.hlBest)window.hlBest=window.hlScore;document.getElementById('hlBest').textContent=window.hlBest;window.hlScore=0;document.getElementById('hlScore').textContent=0;document.getElementById('hlMsg').textContent=`Wrong! It was ${next.rank}${next.suit}. Score reset.`;}
+};
+
+// ===== HANGMAN =====
+const hangWords=['javascript','python','hangman','developer','keyboard','function','variable','browser','algorithm','interface'];
+function gameHangman(title){
+  window.hangWord=hangWords[Math.floor(Math.random()*hangWords.length)];
+  window.hangGuessed=new Set(); window.hangWrong=0;
+  openModal(title,`
+    <canvas id="hangmanCanvas" width="200" height="150"></canvas>
+    <div class="hang-word" id="hangWord"></div>
+    <div id="hangMsg" class="game-msg" style="margin-bottom:10px">Guess the word!</div>
+    <div class="hang-kb" id="hangKb">${'abcdefghijklmnopqrstuvwxyz'.split('').map(l=>`<button class="hang-key" id="hk-${l}" onclick="hangGuess('${l}')">${l}</button>`).join('')}</div>
+  `);
+  hangDraw(); hangRenderWord();
+}
+function hangDraw(){
+  const cvs=document.getElementById('hangmanCanvas'); if(!cvs) return;
+  const ctx=cvs.getContext('2d'); ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+  ctx.clearRect(0,0,200,150);
+  ctx.beginPath(); ctx.moveTo(20,140); ctx.lineTo(160,140); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(60,140); ctx.lineTo(60,10); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(60,10); ctx.lineTo(120,10); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(120,10); ctx.lineTo(120,30); ctx.stroke();
+  const w=window.hangWrong;
+  if(w>0){ctx.beginPath();ctx.arc(120,42,12,0,Math.PI*2);ctx.stroke();}
+  if(w>1){ctx.beginPath();ctx.moveTo(120,54);ctx.lineTo(120,90);ctx.stroke();}
+  if(w>2){ctx.beginPath();ctx.moveTo(120,60);ctx.lineTo(100,78);ctx.stroke();}
+  if(w>3){ctx.beginPath();ctx.moveTo(120,60);ctx.lineTo(140,78);ctx.stroke();}
+  if(w>4){ctx.beginPath();ctx.moveTo(120,90);ctx.lineTo(100,112);ctx.stroke();}
+  if(w>5){ctx.beginPath();ctx.moveTo(120,90);ctx.lineTo(140,112);ctx.stroke();}
+}
+function hangRenderWord(){
+  const el=document.getElementById('hangWord'); if(!el) return;
+  el.innerHTML=window.hangWord.split('').map(l=>`<div class="hang-letter">${window.hangGuessed.has(l)?l:''}</div>`).join('');
+}
+window.hangGuess=function(l){
+  if(window.hangGuessed.has(l)) return;
+  window.hangGuessed.add(l);
+  const btn=document.getElementById('hk-'+l); if(!btn) return;
+  btn.disabled=true;
+  if(window.hangWord.includes(l)){btn.classList.add('correct');}
+  else{btn.classList.add('wrong'); window.hangWrong++;}
+  hangDraw(); hangRenderWord();
+  const won=window.hangWord.split('').every(c=>window.hangGuessed.has(c));
+  const lost=window.hangWrong>=6;
+  const msg=document.getElementById('hangMsg');
+  if(won){msg.textContent='🎉 You got it!';}
+  else if(lost){msg.textContent=`💀 Game Over! Word was: ${window.hangWord}`; for(let c of window.hangWord) window.hangGuessed.add(c); hangRenderWord();}
+};
+
+// ===== 2048 =====
+function game2048(title){
+  openModal(title,`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="score-item" style="flex:1;text-align:center"><div class="val" id="g2048Score">0</div><div class="lbl">Score</div></div>
+      <button class="btn btn-sm" onclick="init2048()">New</button>
+    </div>
+    <div style="text-align:center;font-size:12px;color:#666;margin-bottom:6px">Arrow keys to move</div>
+    <div id="g2048"></div>
+  `);
+  init2048();
+}
+window.init2048=function(){
+  window.b2048=Array(4).fill(null).map(()=>Array(4).fill(0));
+  window.score2048=0;
+  add2048Tile(); add2048Tile(); render2048();
+};
+function add2048Tile(){
+  const empty=[];
+  window.b2048.forEach((row,r)=>row.forEach((v,c)=>{if(!v)empty.push([r,c]);}));
+  if(!empty.length) return;
+  const [r,c]=empty[Math.floor(Math.random()*empty.length)];
+  window.b2048[r][c]=Math.random()<0.9?2:4;
+}
+function render2048(){
+  const colors={0:'#222',2:'#eee',4:'#ede0c8',8:'#f2b179',16:'#f59563',32:'#f67c5f',64:'#f65e3b',128:'#edcf72',256:'#edcc61',512:'#edc850',1024:'#edc53f',2048:'#edc22e'};
+  const el=document.getElementById('g2048'); if(!el) return;
+  el.innerHTML=window.b2048.flat().map(v=>`<div class="t2048" style="background:${colors[v]||'#3c3a32'};color:${v<=4?'#776e65':'#f9f6f2'};font-size:${v>=1024?'0.8rem':'1.1rem'}">${v||''}</div>`).join('');
+  document.getElementById('g2048Score').textContent=window.score2048;
+}
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('g2048')||!window.b2048) return;
+  const moves={ArrowUp:()=>move2048('up'),ArrowDown:()=>move2048('down'),ArrowLeft:()=>move2048('left'),ArrowRight:()=>move2048('right')};
+  if(moves[e.key]){moves[e.key]();e.preventDefault();}
+});
+function move2048(dir){
+  let moved=false;
+  function slideRow(row){
+    let r=row.filter(v=>v); let res=[];
+    for(let i=0;i<r.length;i++){if(r[i+1]&&r[i]===r[i+1]){res.push(r[i]*2);window.score2048+=r[i]*2;i++;}else res.push(r[i]);}
+    while(res.length<4)res.push(0);
+    return res;
+  }
+  let b=window.b2048.map(r=>[...r]);
+  if(dir==='left'){b=b.map(r=>{const n=slideRow(r);if(n.join()!==r.join())moved=true;return n;});}
+  else if(dir==='right'){b=b.map(r=>{const rev=slideRow([...r].reverse()).reverse();if(rev.join()!==r.join())moved=true;return rev;});}
+  else if(dir==='up'){for(let c=0;c<4;c++){const col=b.map(r=>r[c]);const n=slideRow(col);if(n.join()!==col.join())moved=true;b.forEach((r,i)=>r[c]=n[i]);}}
+  else if(dir==='down'){for(let c=0;c<4;c++){const col=b.map(r=>r[c]).reverse();const n=slideRow(col).reverse();if(n.join()!==col.join())moved=true;b.forEach((r,i)=>r[c]=n[i]);}}
+  if(moved){window.b2048=b;add2048Tile();render2048();}
+}
+
+// ===== WHACK A MOLE =====
+let whackInterval=null, whackMoleTimeout=null;
+function gameWhack(title){
+  openModal(title,`
+    <div class="score-box"><div class="score-item"><div class="val" id="whackScore">0</div><div class="lbl">Score</div></div><div class="score-item"><div class="val" id="whackTime">30</div><div class="lbl">Time</div></div></div>
+    <div class="whack-grid">${Array(9).fill(0).map((_,i)=>`<div class="whack-hole" id="wh${i}" onclick="whackHit(${i})"></div>`).join('')}</div>
+    <div class="game-msg" id="whackMsg">Press Start!</div>
+    <div style="text-align:center;margin-top:10px"><button class="btn" onclick="startWhack()">Start</button></div>
+  `);
+  window.whackScore=0; window.whackTimeLeft=30;
+}
+window.startWhack=function(){
+  stopWhack(); window.whackScore=0; window.whackTimeLeft=30;
+  document.getElementById('whackScore').textContent=0;
+  document.getElementById('whackMsg').textContent='Whack the mole!';
+  function showMole(){
+    for(let i=0;i<9;i++){const h=document.getElementById('wh'+i);if(h){h.textContent='';h.classList.remove('active');}}
+    const idx=Math.floor(Math.random()*9);
+    const h=document.getElementById('wh'+idx);
+    if(h){h.textContent='🐹';h.classList.add('active');}
+    whackMoleTimeout=setTimeout(()=>{if(h){h.textContent='';h.classList.remove('active');}showMole();},800+Math.random()*600);
+  }
+  showMole();
+  whackInterval=setInterval(()=>{
+    window.whackTimeLeft--;
+    const el=document.getElementById('whackTime'); if(el) el.textContent=window.whackTimeLeft;
+    if(window.whackTimeLeft<=0){stopWhack();const msg=document.getElementById('whackMsg');if(msg)msg.textContent=`Time's up! Score: ${window.whackScore}`;}
+  },1000);
+};
+window.whackHit=function(i){
+  const h=document.getElementById('wh'+i);
+  if(!h||!h.classList.contains('active')) return;
+  h.textContent='💥'; h.classList.remove('active');
+  window.whackScore++; const el=document.getElementById('whackScore'); if(el) el.textContent=window.whackScore;
+};
+function stopWhack(){clearInterval(whackInterval);clearTimeout(whackMoleTimeout);whackInterval=null;}
+
+// ===== TRIVIA =====
+const triviaQ=[
+  {q:'What is the capital of France?',opts:['Berlin','Madrid','Paris','Rome'],a:2},
+  {q:'How many planets are in the Solar System?',opts:['7','8','9','10'],a:1},
+  {q:'What element has the symbol "O"?',opts:['Gold','Oxygen','Osmium','Silver'],a:1},
+  {q:'Who wrote Romeo and Juliet?',opts:['Dickens','Shakespeare','Hemingway','Austen'],a:1},
+  {q:'What is 7 × 8?',opts:['54','56','58','52'],a:1},
+  {q:'What is the largest continent?',opts:['Africa','Americas','Asia','Europe'],a:2},
+  {q:'How many sides does a hexagon have?',opts:['5','6','7','8'],a:1},
+  {q:'What language does JavaScript run in?',opts:['Server','Database','Browser','OS'],a:2},
+  {q:'What is H₂O commonly called?',opts:['Salt','Water','Hydrogen','Oxide'],a:1},
+  {q:'What year did WWII end?',opts:['1943','1944','1945','1946'],a:2},
+  {q:'Which planet is known as the Red Planet?',opts:['Venus','Jupiter','Mars','Saturn'],a:2},
+  {q:'What is the speed of light (approx)?',opts:['300,000 km/s','150,000 km/s','500,000 km/s','1,000 km/s'],a:0},
+];
+function gameTrivia(title){
+  window.triScore=0; window.triIdx=0; window.triShuffled=[...triviaQ].sort(()=>Math.random()-0.5);
+  openModal(title,`
+    <div class="score-box"><div class="score-item"><div class="val" id="triScore">0</div><div class="lbl">Score</div></div><div class="score-item"><div class="val" id="triQ">1</div><div class="lbl">Question</div></div></div>
+    <div id="triBody"></div>
+  `);
+  triRender();
+}
+function triRender(){
+  const q=window.triShuffled[window.triIdx%window.triShuffled.length];
+  document.getElementById('triQ').textContent=window.triIdx+1;
+  document.getElementById('triBody').innerHTML=`
+    <div class="game-msg" style="font-size:14px;text-align:left;padding:16px">${q.q}</div>
+    <div class="trivia-opts">${q.opts.map((o,i)=>`<button class="trivia-opt" onclick="triAnswer(${i})">${o}</button>`).join('')}</div>
+  `;
+}
+window.triAnswer=function(i){
+  const q=window.triShuffled[window.triIdx%window.triShuffled.length];
+  const btns=document.querySelectorAll('.trivia-opt');
+  btns[q.a].classList.add('correct');
+  if(i===q.a){window.triScore++;document.getElementById('triScore').textContent=window.triScore;}
+  else btns[i].classList.add('wrong');
+  btns.forEach(b=>b.disabled=true);
+  setTimeout(()=>{window.triIdx++;triRender();},1200);
+};
+
+// ===== TYPING =====
+const typingTexts=['The quick brown fox jumps over the lazy dog near the river bank at sunset.','JavaScript is a powerful scripting language used for web development worldwide.','The stars shine bright on a clear night sky when clouds are nowhere to be found.','Practice makes perfect and patience is truly a virtue worth developing every day.'];
+function gameTyping(title){
+  window.tText=typingTexts[Math.floor(Math.random()*typingTexts.length)];
+  window.tStart=null; window.tDone=false;
+  openModal(title,`
+    <div class="score-box"><div class="score-item"><div class="val" id="tWPM">0</div><div class="lbl">WPM</div></div><div class="score-item"><div class="val" id="tAcc">100%</div><div class="lbl">Accuracy</div></div></div>
+    <div id="typingText"></div>
+    <input id="typingInput" placeholder="Start typing..." oninput="typingInput()" autocomplete="off" spellcheck="false">
+    <div class="game-msg" id="tMsg" style="margin-top:10px">Type the text above as fast as you can!</div>
+  `);
+  tRender('');
+}
+function tRender(typed){
+  const txt=window.tText;
+  let html='';
+  for(let i=0;i<txt.length;i++){
+    if(i<typed.length) html+=`<span class="${typed[i]===txt[i]?'t-correct':'t-wrong'}">${txt[i]}</span>`;
+    else if(i===typed.length) html+=`<span class="t-current">${txt[i]}</span>`;
+    else html+=txt[i];
+  }
+  document.getElementById('typingText').innerHTML=html;
+}
+window.typingInput=function(){
+  const inp=document.getElementById('typingInput'); if(!inp||window.tDone) return;
+  const val=inp.value;
+  if(!window.tStart) window.tStart=Date.now();
+  tRender(val);
+  const mins=(Date.now()-window.tStart)/60000;
+  const words=val.trim().split(/\s+/).length;
+  document.getElementById('tWPM').textContent=Math.round(words/mins)||0;
+  let correct=0; for(let i=0;i<val.length;i++) if(val[i]===window.tText[i]) correct++;
+  document.getElementById('tAcc').textContent=val.length?Math.round(correct/val.length*100)+'%':'100%';
+  if(val===window.tText){window.tDone=true; const wpm=Math.round(words/mins); document.getElementById('tMsg').textContent=`Done! ${wpm} WPM 🎉`;}
+};
+
+// ===== REACTION =====
+function gameReaction(title){
+  window.reState='idle'; window.reStart=0; window.reTimes=[];
+  openModal(title,`
+    <div class="score-box"><div class="score-item"><div class="val" id="reLast">—</div><div class="lbl">Last (ms)</div></div><div class="score-item"><div class="val" id="reBest">—</div><div class="lbl">Best (ms)</div></div></div>
+    <div id="reactionBox" style="background:#1a1a1a" onclick="reClick()">
+      <span id="reText">Click to start</span>
+    </div>
+    <p style="text-align:center;font-size:12px;color:#666;margin-top:10px">Wait for green, then click as fast as possible!</p>
+  `);
+}
+window.reClick=function(){
+  const box=document.getElementById('reactionBox');
+  const txt=document.getElementById('reText');
+  if(!box) return;
+  if(window.reState==='idle'||window.reState==='done'){
+    window.reState='waiting'; box.style.background='#1a1a1a'; txt.textContent='Wait for green...';
+    const delay=1500+Math.random()*3000;
+    window.reTimeout=setTimeout(()=>{
+      box.style.background='#1a3a1a'; txt.textContent='CLICK NOW!';
+      window.reStart=Date.now(); window.reState='ready';
+    },delay);
+  } else if(window.reState==='waiting'){
+    clearTimeout(window.reTimeout); window.reState='idle';
+    box.style.background='#3a1a1a'; txt.textContent='Too early! Click to try again.';
+  } else if(window.reState==='ready'){
+    const ms=Date.now()-window.reStart; window.reTimes.push(ms);
+    const best=Math.min(...window.reTimes);
+    document.getElementById('reLast').textContent=ms;
+    document.getElementById('reBest').textContent=best;
+    box.style.background='#1a1a1a'; txt.textContent=`${ms}ms! Click to go again.`;
+    window.reState='done';
+  }
+};
+
+// ===== AI CHAT =====
+const aiResponses={
+  hello:["Hey! Ready to play some games? 🎮","Hello! I'm your game companion bot!","Hi there! What game are you playing today?"],
+  hi:["Hey! 👋 What's up?","Hello! Let's chat!","Hi! I'm here to chat while you game."],
+  how:["I'm doing great! Just waiting for you to beat some high scores.","Doing awesome! Ready to help you win!","Never better! Go beat that 2048 record!"],
+  best:["My favorite is 2048. Numbers are fascinating!","I love Snake. Classic and addictive!","Rock Paper Scissors never gets old to me."],
+  play:["You should try Snake, it's super addictive!","Give 2048 a shot, it's a brain workout!","Wordle is a great choice for word lovers!"],
+  score:["Keep practicing, you'll beat the high score!","Scores are just numbers. Fun is the real win!","Every attempt makes you better!"],
+  help:["Try all 20 games and find your favorite!","The AI games like TicTacToe can be tricky!","Wordle and Hangman are great for word skills!"],
+  thanks:["Anytime! Happy gaming! 🎮","You're welcome! Go get that high score!","No problem! Let me know if you need tips!"],
+  default:["Interesting! Tell me more about your game session.","Cool! Any high scores today?","Nice! Which game are you enjoying the most?","I'm just a simple bot, but I love chatting about games!","Have you tried all 20 games yet?","Keep playing and let me know if you need tips!"]
+};
+function getAIReply(msg){
+  const m=msg.toLowerCase();
+  for(const [k,v] of Object.entries(aiResponses)){
+    if(k!=='default'&&m.includes(k)) return v[Math.floor(Math.random()*v.length)];
+  }
+  const d=aiResponses.default; return d[Math.floor(Math.random()*d.length)];
+}
+function gameAIChat(title){
+  openModal(title,`
+    <div class="chat-history" id="chatHistory">
+      <div class="chat-msg bot">Hey! I'm DihBot 🤖 Your gaming companion. Chat with me while you play!</div>
+    </div>
+    <div class="chat-input-row">
+      <input id="chatInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="btn" onclick="sendChat()">Send</button>
+    </div>
+  `);
+}
+window.sendChat=function(){
+  const inp=document.getElementById('chatInput'); if(!inp||!inp.value.trim()) return;
+  const msg=inp.value.trim(); inp.value='';
+  const hist=document.getElementById('chatHistory');
+  hist.innerHTML+=`<div class="chat-msg user">${msg}</div>`;
+  setTimeout(()=>{
+    hist.innerHTML+=`<div class="chat-msg bot">${getAIReply(msg)}</div>`;
+    hist.scrollTop=hist.scrollHeight;
+  },500);
+  hist.scrollTop=hist.scrollHeight;
+};
+
+// ===== NUMBER GUESS =====
+function gameNumber(title){
+  window.ngSecret=Math.floor(Math.random()*100)+1; window.ngTries=7; window.ngDone=false;
+  openModal(title,`
+    <div class="score-box"><div class="score-item"><div class="val" id="ngTries">7</div><div class="lbl">Tries Left</div></div></div>
+    <div class="game-msg" id="ngMsg">Guess a number between 1 and 100!</div>
+    <input id="guessInput" type="number" min="1" max="100" placeholder="Enter guess..." onkeydown="if(event.key==='Enter')ngGuess()">
+    <div style="text-align:center"><button class="btn" onclick="ngGuess()">Guess</button></div>
+    <div id="ngHistory" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center"></div>
+  `);
+}
+window.ngGuess=function(){
+  if(window.ngDone) return;
+  const inp=document.getElementById('guessInput'); if(!inp) return;
+  const g=parseInt(inp.value); inp.value='';
+  if(!g||g<1||g>100){document.getElementById('ngMsg').textContent='Enter a number 1-100!';return;}
+  window.ngTries--;
+  const hist=document.getElementById('ngHistory');
+  if(g===window.ngSecret){document.getElementById('ngMsg').textContent=`🎉 Correct! ${g} is right!`;window.ngDone=true;hist.innerHTML+=`<span style="background:#1a3a1a;color:#2ecc71;padding:4px 10px;border-radius:99px;font-size:12px">${g}✓</span>`;}
+  else if(window.ngTries===0){document.getElementById('ngMsg').textContent=`💀 Game over! It was ${window.ngSecret}`;window.ngDone=true;}
+  else{document.getElementById('ngMsg').textContent=g<window.ngSecret?`📈 Too low! Try higher.`:`📉 Too high! Try lower.`;hist.innerHTML+=`<span style="background:#2a2a2a;padding:4px 10px;border-radius:99px;font-size:12px">${g}</span>`;}
+  document.getElementById('ngTries').textContent=window.ngTries;
+};
+
+// ===== COIN FLIP =====
+function gameCoin(title){
+  openModal(title,`
+    <div class="score-box"><div class="score-item"><div class="val" id="coinH">0</div><div class="lbl">Heads</div></div><div class="score-item"><div class="val" id="coinT">0</div><div class="lbl">Tails</div></div></div>
+    <span class="big-emoji" id="coinEmoji">🪙</span>
+    <div class="game-msg" id="coinMsg">Make your call!</div>
+    <div style="display:flex;gap:12px;justify-content:center">
+      <button class="btn" onclick="coinFlip('heads')">👑 Heads</button>
+      <button class="btn btn-outline" onclick="coinFlip('tails')">🌊 Tails</button>
+    </div>
+  `);
+  window.coinH=0; window.coinT=0;
+}
+window.coinFlip=function(choice){
+  const result=Math.random()<0.5?'heads':'tails';
+  if(result==='heads')window.coinH++;else window.coinT++;
+  document.getElementById('coinEmoji').textContent=result==='heads'?'👑':'🌊';
+  document.getElementById('coinH').textContent=window.coinH;
+  document.getElementById('coinT').textContent=window.coinT;
+  document.getElementById('coinMsg').textContent=result==='heads'?`Heads! ${choice===result?'✅ You win!':'❌ You lose!'}`:`Tails! ${choice===result?'✅ You win!':'❌ You lose!'}`;
+};
+
+// ===== DICE =====
+const diceFaces=['⚀','⚁','⚂','⚃','⚄','⚅'];
+function gameDice(title){
+  openModal(title,`
+    <div class="game-msg" id="diceMsg">Choose how many dice to roll!</div>
+    <div style="display:flex;gap:8px;justify-content:center;margin:12px 0">
+      ${[1,2,3,4,5,6].map(n=>`<button class="btn btn-outline btn-sm" onclick="rollDice(${n})">${n}🎲</button>`).join('')}
+    </div>
+    <div class="dice-row" id="diceResult" style="min-height:80px;align-items:center;justify-content:center"></div>
+    <div id="diceSum" style="text-align:center;font-size:1.5rem;font-weight:900;margin-top:10px"></div>
+  `);
+}
+window.rollDice=function(n){
+  const rolls=Array(n).fill(0).map(()=>Math.floor(Math.random()*6));
+  const sum=rolls.reduce((a,b)=>a+b+1,0);
+  document.getElementById('diceResult').innerHTML=rolls.map(r=>`<div class="die">${diceFaces[r]}</div>`).join('');
+  document.getElementById('diceMsg').textContent=`Rolled ${n} dice!`;
+  document.getElementById('diceSum').textContent=n>1?`Total: ${sum}`:'';
+};
+
+// ===== COLOR MATCH =====
+const cmColors=['red','blue','green','orange','purple','yellow'];
+const cmColorCSS={red:'#e74c3c',blue:'#3498db',green:'#2ecc71',orange:'#e67e22',purple:'#9b59b6',yellow:'#f1c40f'};
+function gameColorMatch(title){
+  window.cmScore=0; window.cmStreak=0;
+  openModal(title,`
+    <div class="score-box"><div class="score-item"><div class="val" id="cmScore">0</div><div class="lbl">Score</div></div><div class="score-item"><div class="val" id="cmStreak">0</div><div class="lbl">Streak</div></div></div>
+    <p style="text-align:center;font-size:12px;color:#888;margin-bottom:8px">Click the <b style="color:#fff">COLOR OF THE INK</b>, not the word!</p>
+    <div id="cmWord" class="cm-word"></div>
+    <div class="cm-opts" id="cmOpts"></div>
+    <div class="game-msg" id="cmMsg">What color is the text written in?</div>
+  `);
+  cmNext();
+}
+function cmNext(){
+  const wordColor=cmColors[Math.floor(Math.random()*cmColors.length)];
+  let textColor; do{textColor=cmColors[Math.floor(Math.random()*cmColors.length)];}while(textColor===wordColor||Math.random()<0.3);
+  window.cmAnswer=textColor;
+  document.getElementById('cmWord').style.color=cmColorCSS[textColor];
+  document.getElementById('cmWord').textContent=wordColor.toUpperCase();
+  const opts=[...cmColors].sort(()=>Math.random()-0.5).slice(0,4);
+  if(!opts.includes(textColor)){opts[0]=textColor; opts.sort(()=>Math.random()-0.5);}
+  document.getElementById('cmOpts').innerHTML=opts.map(c=>`<button class="cm-btn" style="background:${cmColorCSS[c]}" onclick="cmGuess('${c}')">${c}</button>`).join('');
+}
+window.cmGuess=function(c){
+  if(c===window.cmAnswer){window.cmScore++;window.cmStreak++;document.getElementById('cmMsg').textContent='Correct! ✅';}
+  else{window.cmStreak=0;document.getElementById('cmMsg').textContent=`Wrong! It was ${window.cmAnswer} ❌`;}
+  document.getElementById('cmScore').textContent=window.cmScore;
+  document.getElementById('cmStreak').textContent=window.cmStreak;
+  setTimeout(cmNext,900);
+};
+
+// ===== MINESWEEPER =====
+function gameMinesweeper(title){
+  openModal(title,`
+    <div class="score-box"><div class="score-item"><div class="val" id="msFlags">10</div><div class="lbl">Mines Left</div></div><div class="score-item"><div class="val" id="msTime">0</div><div class="lbl">Time</div></div></div>
+    <p style="text-align:center;font-size:11px;color:#666;margin-bottom:8px">Left click: reveal · Right click: flag 🚩</p>
+    <div class="ms-grid" id="msGrid"></div>
+    <div class="game-msg" id="msMsg">Find all mines!</div>
+    <div style="text-align:center;margin-top:10px"><button class="btn" onclick="msInit()">New Game</button></div>
+  `);
+  msInit();
+}
+window.msInit=function(){
+  const R=9,C=9,MINES=10;
+  window.msBoard=Array(R).fill(null).map(()=>Array(C).fill({mine:false,revealed:false,flagged:false,count:0}));
+  window.msBoard=window.msBoard.map(r=>r.map(()=>({mine:false,revealed:false,flagged:false,count:0})));
+  let placed=0;
+  while(placed<MINES){const r=Math.floor(Math.random()*R),c=Math.floor(Math.random()*C);if(!window.msBoard[r][c].mine){window.msBoard[r][c].mine=true;placed++;}}
+  for(let r=0;r<R;r++)for(let c=0;c<C;c++){if(!window.msBoard[r][c].mine){let cnt=0;for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const nr=r+dr,nc=c+dc;if(nr>=0&&nr<R&&nc>=0&&nc<C&&window.msBoard[nr][nc].mine)cnt++;}window.msBoard[r][c].count=cnt;}}
+  window.msFlags=MINES; window.msDone=false; window.msTimer=0;
+  clearInterval(window.msTimerInt);
+  window.msTimerInt=setInterval(()=>{window.msTimer++;const el=document.getElementById('msTime');if(el)el.textContent=window.msTimer;else clearInterval(window.msTimerInt);},1000);
+  document.getElementById('msFlags').textContent=MINES;
+  msRender();
+};
+function msRender(){
+  const el=document.getElementById('msGrid'); if(!el) return;
+  const numColors=['','#3498db','#2ecc71','#e74c3c','#9b59b6','#e74c3c','#1abc9c','#000','#888'];
+  el.innerHTML=window.msBoard.flat().map((cell,i)=>{
+    const r=Math.floor(i/9),c=i%9;
+    if(cell.revealed){if(cell.mine)return`<div class="ms-cell revealed" style="color:#e74c3c">💣</div>`;if(cell.count)return`<div class="ms-cell revealed" style="color:${numColors[cell.count]}">${cell.count}</div>`;return`<div class="ms-cell revealed"></div>`;}
+    if(cell.flagged)return`<div class="ms-cell flagged" oncontextmenu="msFlag(${r},${c});return false">🚩</div>`;
+    return`<div class="ms-cell" onclick="msReveal(${r},${c})" oncontextmenu="msFlag(${r},${c});return false"></div>`;
+  }).join('');
+}
+window.msReveal=function(r,c){
+  if(window.msDone||window.msBoard[r][c].revealed||window.msBoard[r][c].flagged) return;
+  window.msBoard[r][c].revealed=true;
+  if(window.msBoard[r][c].mine){window.msDone=true;clearInterval(window.msTimerInt);document.getElementById('msMsg').textContent='💥 BOOM! Game Over!';msRevealAll();}
+  else{if(window.msBoard[r][c].count===0){for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const nr=r+dr,nc=c+dc;if(nr>=0&&nr<9&&nc>=0&&nc<9&&!window.msBoard[nr][nc].revealed)window.msReveal(nr,nc);}}
+  const won=window.msBoard.flat().every(cell=>cell.revealed||cell.mine);
+  if(won){window.msDone=true;clearInterval(window.msTimerInt);document.getElementById('msMsg').textContent=`🎉 You Win! Time: ${window.msTimer}s`;}}
+  msRender();
+};
+function msRevealAll(){window.msBoard.forEach(r=>r.forEach(c=>c.revealed=true));msRender();}
+window.msFlag=function(r,c){
+  if(window.msDone||window.msBoard[r][c].revealed) return;
+  window.msBoard[r][c].flagged=!window.msBoard[r][c].flagged;
+  window.msFlags+=window.msBoard[r][c].flagged?-1:1;
+  document.getElementById('msFlags').textContent=window.msFlags;
+  msRender();
+};
+</script>
+</body>
+</html>
